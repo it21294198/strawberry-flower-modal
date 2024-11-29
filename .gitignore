@@ -1,0 +1,26 @@
+/yolo_processed_img/
+/train-yolo-model/dataset/
+/train-yolo-model/runs/
+/train-yolo-model/runs epoch 3/
+/cv_processed_img/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+
+# Virtual environment
+.venv/
+/.venv/
+env/
+venv/
+
+# Environment variables
+*.env
+*.env.*
+
+# IDE files
+.vscode/
+.idea/
