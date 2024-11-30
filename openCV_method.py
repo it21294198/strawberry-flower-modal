@@ -31,13 +31,13 @@ def find_flower_cv(b64img: str) -> str:
     image_path = f"{filename}.png"
     cv2.imwrite(image_path, processed_image)
 
-    # save the coordinates to a text file
+    # save coordinates to a text
     txt_path = f"{filename}.txt"
     with open(txt_path, "w") as f:
         for coord in normalized_coords:
             f.write(f"{coord[0]:.6f}, {coord[1]:.6f}\n")
 
-    # Convert the processed image to Base64
+    # convert processed image to Base64
     _, buffer = cv2.imencode(".png", processed_image)
     result_base64 = base64.b64encode(buffer).decode("utf-8")
 
@@ -55,32 +55,32 @@ def detect_flowers_and_simplify(image, output_size=(500, 500)):
     image_resized = cv2.resize(image, output_size)
     height, width, _ = image_resized.shape
 
-    # Convert to HSV for color filtering
+    # convert to HSV for color filtering
     hsv_image = cv2.cvtColor(image_resized, cv2.COLOR_BGR2HSV)
 
-    # Define a mask for white-like colors (flower areas)
+    # define a mask for white-like colors (flower areas)
     lower_white = numpy.array([0, 0, 200])
     upper_white = numpy.array([180, 30, 255])
     mask = cv2.inRange(hsv_image, lower_white, upper_white)
 
-    # Detect contours of the flowers
+    # detect contours of the flowers
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # Create an output image with simplified colors
+    # create an output image with simplified colors
     output_image = numpy.zeros_like(image_resized)
     normalized_coords = []
 
     for contour in contours:
-        # Get the center of each flower
+        # get the center of each flower
         moment = cv2.moments(contour)
         if moment["m00"] != 0:
             cx = int(moment["m10"] / moment["m00"])
             cy = int(moment["m01"] / moment["m00"])
 
-            # Normalize the coordinates (between 0.0 and 1.0)
+            # normalize coordinates
             normalized_coords.append((cx / width, cy / height))
 
-            # Draw a white circle to represent the flower location
+            # draw a white circle to represent the flower location
             cv2.circle(output_image, (cx, cy), 10, (255, 255, 255), -1)
 
     return output_image, normalized_coords
