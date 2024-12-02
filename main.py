@@ -3,7 +3,9 @@ import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import HTMLResponse
 
+from demo_page import demo_page
 from openCV_method import find_flower_cv
 from yolo_method import find_flower_yolo
 
@@ -28,9 +30,9 @@ class ImageRequest(BaseModel):
 
 
 # routes
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return {"message": "This is working"}
+    return demo_page()
 
 
 @app.post("/find-flower-cv")
