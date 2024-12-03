@@ -10,7 +10,7 @@ def find_flower_cv(b64img: str) -> str:
     :return: Base64 encoded processed image string (image string part only).
     """
 
-    # decode the Base64 image to an OpenCV-compatible format
+    # decode the Base64 image to an OpenCV  format
     image_array = numpy.frombuffer(base64.b64decode(b64img), numpy.uint8)
     image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
 
@@ -46,19 +46,16 @@ def find_flower_cv(b64img: str) -> str:
 
 def detect_flowers_and_simplify(image, output_size=(500, 500)):
     """
-    :param image: Image array in BGR format.
-    :param output_size: Tuple for resizing the image (width, height).
     :return: (processed_image, normalized_coordinates).
     """
 
-    # resize for easier processing
     image_resized = cv2.resize(image, output_size)
     height, width, _ = image_resized.shape
 
-    # convert to HSV for color filtering
+    # convert to HSV
     hsv_image = cv2.cvtColor(image_resized, cv2.COLOR_BGR2HSV)
 
-    # define a mask for white-like colors (flower areas)
+    # mask for white like colors (flowers)
     lower_white = numpy.array([0, 0, 200])
     upper_white = numpy.array([180, 30, 255])
     mask = cv2.inRange(hsv_image, lower_white, upper_white)
@@ -66,7 +63,7 @@ def detect_flowers_and_simplify(image, output_size=(500, 500)):
     # detect contours of the flowers
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # create an output image with simplified colors
+    # create output image
     output_image = numpy.zeros_like(image_resized)
     normalized_coords = []
 
