@@ -7,7 +7,8 @@ from datetime import datetime
 
 def find_flower_yolo(b64img: str) -> dict:
     """
-    Detect flowers using YOLOv8 model and return processed image with bounding boxes and coordinates.
+    :param b64img: Base64 encoded image string (image string part only).
+    :return: A response JSON with processed image and coordinates.
     """
 
     # decode the Base64 image
@@ -15,7 +16,7 @@ def find_flower_yolo(b64img: str) -> dict:
     image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
 
     if image is None:
-        raise ValueError("Failed to decode image from Base64 input.")
+        raise ValueError("Failed to decode image from Base64 input. Check input, don't send this part 'data:image/png;base64,'.")
 
     if not os.path.exists("YOLOv8-str-flower-model.pt"):
         raise FileNotFoundError("Model file not found")
@@ -27,25 +28,34 @@ def find_flower_yolo(b64img: str) -> dict:
     results = model(image, conf=0.3)
 
     # extract bounding boxes and normalize coordinates
-    h, w, _ = image.shape
+    height, width, _ = image.shape
     normalized_coords = []
 
     for box, conf in zip(results[0].boxes.xyxy.cpu().numpy(), results[0].boxes.conf.cpu().numpy()):
         x_min, y_min, x_max, y_max = map(float, box)
         normalized_coords.append({
-            "x": round((x_min + x_max) / (2 * w), 4),  # center x coordinate (normalized)
-            "y": round((y_min + y_max) / (2 * h), 4),  # center y coordinate (normalized)
-            "confidence": round(float(conf), 2),       # confidence
+            "x": round((x_min + x_max) / 2 / width, 4),
+            "y": round((y_min + y_max) / 2 / height, 4),
+            "confidence": round(float(conf), 2),
         })
 
         # draw bounding boxes on the image
-        cv2.rectangle(image, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (0, 255, 0), 2)
+        cv2.rectangle(
+            image,
+            (int(x_min), int(y_min)),
+            (int(x_max), int(y_max)),
+            (0, 255, 0),
+            2
+        )
 
         # add confidence score to image
         text = f"{conf:.2f}"
         cv2.putText(
-            image, text, (int(x_min), int(y_min) - 10), cv2.FONT_HERSHEY_SIMPLEX,
-            0.5, (0, 255, 0), 1, cv2.LINE_AA
+            image, text,
+            (int(x_min), int(y_min) - 10),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+            (0, 255, 0),
+            1, cv2.LINE_AA
         )
 
     # check and make directories
