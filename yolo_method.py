@@ -59,19 +59,19 @@ def find_flower_yolo(b64img: str) -> dict:
         )
 
     # check and make directories
-    os.makedirs("yolo_processed_img", exist_ok=True)
+    # os.makedirs("yolo_processed_img", exist_ok=True)
 
     # save processed image
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"yolo_processed_img/processed_image_{timestamp}"
-    image_path = f"{filename}.png"
-    cv2.imwrite(image_path, image)
-
-    # save location data to a txt
-    txt_path = f"{filename}.txt"
-    with open(txt_path, "w") as f:
-        for coord in normalized_coords:
-            f.write(f"{coord['x']:.6f}, {coord['y']:.6f}\n")
+    # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # filename = f"yolo_processed_img/processed_image_{timestamp}"
+    # image_path = f"{filename}.png"
+    # cv2.imwrite(image_path, image)
+    #
+    # # save location data to a txt
+    # txt_path = f"{filename}.txt"
+    # with open(txt_path, "w") as f:
+    #     for coord in normalized_coords:
+    #         f.write(f"{coord['x']:.6f}, {coord['y']:.6f}\n")
 
     # convert processed image to Base64
     _, buffer = cv2.imencode(".png", image)
