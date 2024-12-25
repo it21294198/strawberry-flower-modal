@@ -4,6 +4,7 @@
 /train-yolo-model/runs epoch 3/
 /cv_processed_img/
 
+/project_env/
 # Python cache files
 __pycache__/
 *.py[cod]
