@@ -11,6 +11,10 @@ def find_flower_yolo(b64img: str) -> dict:
     :return: A response JSON with processed image and coordinates.
     """
 
+    # sorting key
+    sort_key = "y"
+    # note to Rusira: use "x" or "y" to coordinates sort by x-axis or y-axis
+
     # decode the Base64 image
     image_array = numpy.frombuffer(base64.b64decode(b64img), numpy.uint8)
     image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
@@ -58,20 +62,8 @@ def find_flower_yolo(b64img: str) -> dict:
             1, cv2.LINE_AA
         )
 
-    # check and make directories
-    # os.makedirs("yolo_processed_img", exist_ok=True)
-
-    # save processed image
-    # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    # filename = f"yolo_processed_img/processed_image_{timestamp}"
-    # image_path = f"{filename}.png"
-    # cv2.imwrite(image_path, image)
-    #
-    # # save location data to a txt
-    # txt_path = f"{filename}.txt"
-    # with open(txt_path, "w") as f:
-    #     for coord in normalized_coords:
-    #         f.write(f"{coord['x']:.6f}, {coord['y']:.6f}\n")
+    # sorting
+    normalized_coords.sort(key=lambda coord: coord[sort_key])
 
     # convert processed image to Base64
     _, buffer = cv2.imencode(".png", image)
