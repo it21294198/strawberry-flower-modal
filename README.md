@@ -32,6 +32,10 @@
    ```
    uvicorn main:app --reload
    ```
+   or on another port
+   ```
+   uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+   ```
 
 8. Build docker image
    ```
