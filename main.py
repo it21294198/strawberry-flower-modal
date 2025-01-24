@@ -21,8 +21,8 @@ app.add_middleware(
 )
 
 # check and make directories
-os.makedirs("cv_processed_img", exist_ok=True)
-os.makedirs("yolo_processed_img", exist_ok=True)
+# os.makedirs("cv_processed_img", exist_ok=True)
+# os.makedirs("yolo_processed_img", exist_ok=True)
 
 # http request format
 class ImageRequest(BaseModel):

@@ -21,21 +21,21 @@ def find_flower_cv(b64img: str) -> str:
     processed_image, normalized_coords = detect_flowers_and_simplify(image)
 
     # check and make directories
-    os.makedirs("cv_processed_img", exist_ok=True)
+    # os.makedirs("cv_processed_img", exist_ok=True)
 
     # make a timestamped file name
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"cv_processed_img/processed_image_{timestamp}"
+    # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # filename = f"cv_processed_img/processed_image_{timestamp}"
 
     # save the processed image
-    image_path = f"{filename}.png"
-    cv2.imwrite(image_path, processed_image)
+    # image_path = f"{filename}.png"
+    # cv2.imwrite(image_path, processed_image)
 
     # save coordinates to a text
-    txt_path = f"{filename}.txt"
-    with open(txt_path, "w") as f:
-        for coord in normalized_coords:
-            f.write(f"{coord[0]:.6f}, {coord[1]:.6f}\n")
+    # txt_path = f"{filename}.txt"
+    # with open(txt_path, "w") as f:
+    #     for coord in normalized_coords:
+    #         f.write(f"{coord[0]:.6f}, {coord[1]:.6f}\n")
 
     # convert processed image to Base64
     _, buffer = cv2.imencode(".png", processed_image)
