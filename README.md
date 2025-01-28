@@ -63,3 +63,40 @@
     ```
     docker push [above_created_tag_whole_name]
     ```
+
+14. Install Postgres DB
+   1.  Add install the pre-compiled binary package
+      ```
+      pip install psycopg2-binary
+      ```
+   2. Install PostgreSQL Development Tools
+      ```
+      brew install postgresql
+      ```
+   3. Add pg_config to Your PATH: After installing PostgreSQL, ensure that pg_config is in your PATH
+      ```
+      export PATH="/usr/local/opt/postgresql/bin:$PATH"
+      ```
+   4. Install package
+      ```
+      pip install psycopg2
+      ```
+   5. Check version
+      ```
+      python -c "import psycopg2; print(psycopg2.__version__)"
+      ```
+15. To load the .env file in Python.
+    ```
+    pip install python-dotenv
+    ```
+
+16. Create `.env` at root folder and add following
+      ```.env
+      DB_HOST=localhost
+      DB_PORT=5432
+      DB_NAME=mydatabase
+      DB_USER=myuser
+      DB_PASSWORD=mypassword
+      ```
+   
+17. 
