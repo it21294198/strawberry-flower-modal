@@ -8,6 +8,7 @@ from starlette.responses import HTMLResponse
 from db_con import get_db_connection
 from demo_page import demo_page
 from openCV_method import find_flower_cv
+from upload_image import upload_base64_image
 from yolo_method import find_flower_yolo
 
 app = FastAPI()
@@ -106,3 +107,17 @@ def add_rover(data: RoverData):
         return {"rover_id": result[0], "created_at": result[1]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to add rover: {str(e)}")
+
+# Input model
+class Base64ImageInput(BaseModel):
+    base64_string: str
+    file_extension: str = "png"  # Default to PNG; can be "jpg" or others if needed
+
+@app.post("/upload-image/")
+async def upload_image(data: Base64ImageInput):
+    try:
+        # Call the utility function to upload the base64 image
+        blob_url = upload_base64_image(data.base64_string, data.file_extension)
+        return {"message": "Image uploaded successfully", "blob_url": blob_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
