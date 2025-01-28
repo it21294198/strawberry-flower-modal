@@ -92,11 +92,19 @@
 
 16. Create `.env` at root folder and add following
       ```.env
-      DB_HOST=localhost
-      DB_PORT=5432
-      DB_NAME=mydatabase
-      DB_USER=myuser
-      DB_PASSWORD=mypassword
+      DB_HOST=
+      DB_PORT=
+      DB_NAME=
+      DB_USER=
+      DB_PASSWORD=
+
+      DB_CONNECTION=
+
+      AZURE_STORAGE_CONNECTION_STRING=
+      AZURE_STORAGE_CONTAINER_NAME=
+
+      AZURE_STORAGE_ACCOUNT_NAME=
+      AZURE_STORAGE_ACCOUNT_KEY=
       ```
    
-17. 
+17. [Azure Key issues](https://stackoverflow.com/questions/6985921/where-can-i-find-my-azure-account-name-and-account-key)
