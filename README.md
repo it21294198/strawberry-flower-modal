@@ -107,4 +107,6 @@
       AZURE_STORAGE_ACCOUNT_KEY=
       ```
    
-17. [Azure Key issues](https://stackoverflow.com/questions/6985921/where-can-i-find-my-azure-account-name-and-account-key)
+17. Azure Access issues
+   1. [Azure Key issues](https://stackoverflow.com/questions/6985921/where-can-i-find-my-azure-account-name-and-account-key)
+   2. [Blob Storage Anonyms access](https://learn.microsoft.com/en-us/answers/questions/453430/help-with-resourcenotfound-error-when-open-image-l)
