@@ -7,3 +7,4 @@ ultralytics~=8.3.38
 
 motor~=3.6.1
 SQLAlchemy~=2.0.37
+python-dotenv~=1.0.1
