@@ -4,12 +4,20 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
+from dotenv import load_dotenv
 
+from database import DatabaseManager
 from demo_page import demo_page
 from openCV_method import find_flower_cv
 from yolo_method import find_flower_yolo
 
+load_dotenv()
+
 app = FastAPI()
+
+MONGO_URI = os.getenv("MONGO_URI")
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
+POSTGRES_URL = os.getenv("POSTGRES_URL")
 
 # disable CORS for localhost and direct file
 app.add_middleware(
@@ -20,13 +28,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# check and make directories
-# os.makedirs("cv_processed_img", exist_ok=True)
-# os.makedirs("yolo_processed_img", exist_ok=True)
-
 # http request format
 class ImageRequest(BaseModel):
     image: str
+
+
+# DB connection
+db_manager = DatabaseManager()
+
+@app.on_event("startup")
+async def startup_db():
+    await db_manager.connect_all(MONGO_URI, MONGO_DB_NAME, POSTGRES_URL)
+
+@app.on_event("shutdown")
+async def shutdown_db():
+    await db_manager.close_all()
 
 
 # routes
