@@ -63,3 +63,50 @@
     ```
     docker push [above_created_tag_whole_name]
     ```
+
+14. Install Postgres DB
+   1.  Add install the pre-compiled binary package
+      ```
+      pip install psycopg2-binary
+      ```
+   2. Install PostgreSQL Development Tools
+      ```
+      brew install postgresql
+      ```
+   3. Add pg_config to Your PATH: After installing PostgreSQL, ensure that pg_config is in your PATH
+      ```
+      export PATH="/usr/local/opt/postgresql/bin:$PATH"
+      ```
+   4. Install package
+      ```
+      pip install psycopg2
+      ```
+   5. Check version
+      ```
+      python -c "import psycopg2; print(psycopg2.__version__)"
+      ```
+15. To load the .env file in Python.
+    ```
+    pip install python-dotenv
+    ```
+
+16. Create `.env` at root folder and add following
+      ```.env
+      DB_HOST=
+      DB_PORT=
+      DB_NAME=
+      DB_USER=
+      DB_PASSWORD=
+
+      DB_CONNECTION=
+
+      AZURE_STORAGE_CONNECTION_STRING=
+      AZURE_STORAGE_CONTAINER_NAME=
+
+      AZURE_STORAGE_ACCOUNT_NAME=
+      AZURE_STORAGE_ACCOUNT_KEY=
+      ```
+   
+17. Azure Access issues
+   1. [Azure Key issues](https://stackoverflow.com/questions/6985921/where-can-i-find-my-azure-account-name-and-account-key)
+   2. [Blob Storage Anonyms access](https://learn.microsoft.com/en-us/answers/questions/453430/help-with-resourcenotfound-error-when-open-image-l)

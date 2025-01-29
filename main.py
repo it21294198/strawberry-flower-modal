@@ -5,8 +5,10 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
 
+from db_con import get_db_connection
 from demo_page import demo_page
 from openCV_method import find_flower_cv
+from upload_image import upload_base64_image
 from yolo_method import find_flower_yolo
 
 app = FastAPI()
@@ -71,3 +73,51 @@ async def find_flower_with_yolo(request: ImageRequest):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing image with YOLO: {str(e)}")
+
+class RoverData(BaseModel):
+    initial_id: int
+    rover_status: int
+    user_id: int
+
+@app.post("/rovers/")
+def add_rover(data: RoverData):
+    """Route to add a new rover to the database."""
+    try:
+        # Get database connection
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        # SQL query to insert data into the rovers table
+        insert_query = """
+        INSERT INTO rovers (initial_id, rover_status, user_id)
+        VALUES (%s, %s, %s)
+        RETURNING rover_id, created_at;
+        """
+        
+        # Execute the query with provided data
+        cursor.execute(insert_query, (data.initial_id, data.rover_status, data.user_id))
+        result = cursor.fetchone()
+        
+        # Commit the transaction and close the connection
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        # Return the inserted rover ID and timestamp
+        return {"rover_id": result[0], "created_at": result[1]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to add rover: {str(e)}")
+
+# Input model
+class Base64ImageInput(BaseModel):
+    base64_string: str
+    file_extension: str = "png"  # Default to PNG; can be "jpg" or others if needed
+
+@app.post("/upload-image/")
+async def upload_image(data: Base64ImageInput):
+    try:
+        # Call the utility function to upload the base64 image
+        blob_url = upload_base64_image(data.base64_string, data.file_extension)
+        return {"message": "Image uploaded successfully", "blob_url": blob_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
