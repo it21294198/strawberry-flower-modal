@@ -1,17 +1,28 @@
 import os
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
+from dotenv import load_dotenv
 
+
+from database import DatabaseManager
 from db_con import get_db_connection
+
 from demo_page import demo_page
 from openCV_method import find_flower_cv
 from upload_image import upload_base64_image
 from yolo_method import find_flower_yolo
 
+load_dotenv()
+
 app = FastAPI()
+
+MONGO_URI = os.getenv("MONGO_URI")
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
+POSTGRES_URL = os.getenv("POSTGRES_URL")
 
 # disable CORS for localhost and direct file
 app.add_middleware(
@@ -22,19 +33,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# check and make directories
-# os.makedirs("cv_processed_img", exist_ok=True)
-# os.makedirs("yolo_processed_img", exist_ok=True)
-
 # http request format
 class ImageRequest(BaseModel):
     image: str
+
+
+# DB connection
+db_manager = DatabaseManager()
+
+@app.on_event("startup")
+async def startup_db():
+    await db_manager.connect_all(MONGO_URI, MONGO_DB_NAME, POSTGRES_URL)
+
+@app.on_event("shutdown")
+async def shutdown_db():
+    await db_manager.close_all()
+
 
 
 # routes
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return demo_page()
+
 
 
 @app.post("/find-flower-cv")
@@ -56,6 +77,7 @@ async def find_flower_with_cv(request: ImageRequest):
         raise HTTPException(status_code=400, detail=f"Error processing image with cv: {str(e)}")
 
 
+
 @app.post("/find-flower-yolo")
 async def find_flower_with_yolo(request: ImageRequest):
     try:
@@ -73,6 +95,12 @@ async def find_flower_with_yolo(request: ImageRequest):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing image with YOLO: {str(e)}")
+
+@app.get("/db-health")
+async def health_check():
+    health_status = await db_manager.check_health()
+    overall_status = "healthy" if all(status == "healthy" for status in health_status.values()) else "unhealthy"
+    return JSONResponse(content={"status": overall_status, "details": health_status})
 
 class RoverData(BaseModel):
     initial_id: int
