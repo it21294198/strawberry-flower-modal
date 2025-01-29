@@ -22,7 +22,6 @@ app = FastAPI()
 
 MONGO_URI = os.getenv("MONGO_URI")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
-POSTGRES_URL = os.getenv("POSTGRES_URL")
 
 # disable CORS for localhost and direct file
 app.add_middleware(
@@ -37,26 +36,21 @@ app.add_middleware(
 class ImageRequest(BaseModel):
     image: str
 
-
 # DB connection
 db_manager = DatabaseManager()
 
 @app.on_event("startup")
 async def startup_db():
-    await db_manager.connect_all(MONGO_URI, MONGO_DB_NAME, POSTGRES_URL)
+    await db_manager.connect_all(MONGO_URI, MONGO_DB_NAME)
 
 @app.on_event("shutdown")
 async def shutdown_db():
     await db_manager.close_all()
 
-
-
 # routes
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return demo_page()
-
-
 
 @app.post("/find-flower-cv")
 async def find_flower_with_cv(request: ImageRequest):
@@ -75,8 +69,6 @@ async def find_flower_with_cv(request: ImageRequest):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing image with cv: {str(e)}")
-
-
 
 @app.post("/find-flower-yolo")
 async def find_flower_with_yolo(request: ImageRequest):
