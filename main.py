@@ -1,6 +1,7 @@
 import os
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
@@ -45,10 +46,12 @@ async def shutdown_db():
     await db_manager.close_all()
 
 
+
 # routes
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return demo_page()
+
 
 
 @app.post("/find-flower-cv")
@@ -70,6 +73,7 @@ async def find_flower_with_cv(request: ImageRequest):
         raise HTTPException(status_code=400, detail=f"Error processing image with cv: {str(e)}")
 
 
+
 @app.post("/find-flower-yolo")
 async def find_flower_with_yolo(request: ImageRequest):
     try:
@@ -87,3 +91,11 @@ async def find_flower_with_yolo(request: ImageRequest):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing image with YOLO: {str(e)}")
+
+
+
+@app.get("/db-health")
+async def health_check():
+    health_status = await db_manager.check_health()
+    overall_status = "healthy" if all(status == "healthy" for status in health_status.values()) else "unhealthy"
+    return JSONResponse(content={"status": overall_status, "details": health_status})
