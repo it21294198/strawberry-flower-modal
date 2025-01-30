@@ -1,7 +1,6 @@
 import logging
-
 from motor.motor_asyncio import AsyncIOMotorClient
-from typing import Optional
+from typing import Optional, Dict
 
 # MongoDB connection manager
 class MongoDBManager:
@@ -10,35 +9,74 @@ class MongoDBManager:
         self.db = None
 
     async def connect(self, uri: str, database_name: str):
-        self.client = AsyncIOMotorClient(uri)
-        self.db = self.client[database_name]
-        print("Connected to MongoDB")
+        """
+        Connects to MongoDB using the provided URI and database name.
+        """
+        try:
+            self.client = AsyncIOMotorClient(uri)
+            self.db = self.client[database_name]
+            logging.info("Connected to MongoDB")
+        except Exception as e:
+            logging.error(f"Failed to connect to MongoDB: {e}")
+            raise
 
     async def close(self):
+        """
+        Closes the MongoDB connection if it exists.
+        """
         if self.client:
             self.client.close()
-            print("Closed MongoDB connection")
+            logging.info("Closed MongoDB connection")
 
-# connection creator for both at once
+
+# Database connection manager
 class DatabaseManager:
     def __init__(self):
         self.mongo_manager = MongoDBManager()
 
     async def connect_all(self, mongo_uri: str, mongo_db_name: str):
+        """
+        Connects to all necessary databases (currently only MongoDB).
+        """
         try:
             await self.mongo_manager.connect(mongo_uri, mongo_db_name)
         except Exception as e:
             logging.error(f"Failed to connect to MongoDB: {e}")
-            return  # prevent proceeding if MongoDB fails
+            raise
 
     async def close_all(self):
+        """
+        Closes all database connections.
+        """
         await self.mongo_manager.close()
 
+    async def add_to_mongo(self, data: Dict, collection_name: str = "operations"):
+        """
+        Adds a document to the specified MongoDB collection.
+
+        Args:
+            data (Dict): The data to insert into the MongoDB collection.
+            collection_name (str): The name of the MongoDB collection (default: "operations").
+        """
+        try:
+            collection = self.mongo_manager.db[collection_name]  # Access the MongoDB collection
+            result = await collection.insert_one(data)  # Insert the document
+            logging.info(f"Document added to MongoDB with ID: {result.inserted_id}")
+            return result.inserted_id
+        except Exception as e:
+            logging.error(f"Failed to add data to MongoDB: {e}")
+            raise
 
     async def check_health(self):
-        health_status = {"mongo": "unknown", "postgres": "unknown"}
+        """
+        Checks the health of all database connections.
 
-        # check MongoDB
+        Returns:
+            dict: A dictionary containing the health status of each database.
+        """
+        health_status = {"mongo": "unknown"}
+
+        # Check MongoDB health
         try:
             if self.mongo_manager.db:
                 await self.mongo_manager.db.command("ping")  # MongoDB ping command
@@ -49,3 +87,4 @@ class DatabaseManager:
             health_status["mongo"] = f"unhealthy: {str(e)}"
 
         return health_status
+
