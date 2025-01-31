@@ -1,3 +1,8 @@
+###
+POST http://127.0.0.1:8080/rover/trigger/
+
+###
+GET http://127.0.0.1:8080/db-health
 
 ###
 POST http://127.0.0.1:8000/rovers

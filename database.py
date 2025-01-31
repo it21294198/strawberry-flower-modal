@@ -78,13 +78,15 @@ class DatabaseManager:
 
         # Check MongoDB health
         try:
-            if self.mongo_manager.db:
+            if self.mongo_manager.db is not None:
                 await self.mongo_manager.db.command("ping")  # MongoDB ping command
                 health_status["mongo"] = "healthy"
             else:
                 health_status["mongo"] = "not connected"
         except Exception as e:
+            logging.error(f"MongoDB health check failed: {e}")
             health_status["mongo"] = f"unhealthy: {str(e)}"
 
         return health_status
+
 
