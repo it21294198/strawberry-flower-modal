@@ -213,7 +213,7 @@ async def run_trigger():
                 "created_at": data.created_at,
             }
 
-            db_manager.add_to_mongo(mongo_data)
+            await db_manager.add_to_mongo(mongo_data)
 
             # Delete the record from PostgreSQL
             delete_data_query = "DELETE FROM operations WHERE id = %s;"
