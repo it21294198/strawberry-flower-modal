@@ -5,14 +5,14 @@ from pydantic import BaseModel
 class UserModel(BaseModel):
     username: str
     email: str
-    userId: int # postgres ID
+    userId: int
     roverIds: List[int]
-    created_at: datetime
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
 class AdminModel(BaseModel):
     username: str
     email: str
-    password: str
-    created_at: datetime
+    password: Optional[str] = None
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

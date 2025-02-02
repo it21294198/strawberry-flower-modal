@@ -1,12 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from typing import List
 
+from fastapi import APIRouter, HTTPException, status, Depends
+
+from db_manager import get_db_manager
 from upload_image import upload_base64_image
 from models.schemas import RoverData, ImageData
 from database import DatabaseManager
 from db_con import get_db_connection
 
 router = APIRouter()
-db_manager = DatabaseManager()
 
 
 @router.post("/rovers/")
@@ -34,7 +36,7 @@ def add_rover(data: RoverData):
 
 
 @router.post("/rover/trigger/")
-async def run_trigger():
+async def run_trigger(db_manager: DatabaseManager = Depends(get_db_manager)):
     try:
         # Get database connection
         connection = get_db_connection()  # Ensure this supports async if necessary
@@ -109,3 +111,23 @@ async def run_trigger():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to run trigger: {str(e)}")
+
+
+
+# get recoded image ddata from mongo
+@router.get("/rovers/flower-images/{rover_id}", response_model=List[ImageData])
+async def get_rover_data(rover_id: int, db_manager: DatabaseManager = Depends(get_db_manager)):
+    if db_manager.mongo_manager.db is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="MongoDB connection is not established"
+        )
+
+    rover_data = await db_manager.mongo_manager.db['operations'].find({'rover_id': rover_id}).to_list(None)
+    print(rover_data)
+    if not rover_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No data found for this rover ID"
+        )
+    return rover_data

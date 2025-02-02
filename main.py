@@ -4,8 +4,9 @@ from fastapi.responses import HTMLResponse
 
 from config import MONGO_URI, MONGO_DB_NAME
 from database import DatabaseManager
+from db_manager import connect_db
 from demo_page import demo_page
-from routes import flower, health, rover
+from routes import flower, health, rover, mobile
 
 app = FastAPI()
 
@@ -22,17 +23,26 @@ app.add_middleware(
 app.include_router(flower.router)
 app.include_router(health.router)
 app.include_router(rover.router)
+app.include_router(mobile.router)
 
 # DB connection
 db_manager = DatabaseManager()
 
 @app.on_event("startup")
 async def startup_db():
-    await db_manager.connect_all(MONGO_URI, MONGO_DB_NAME)
+    # await db_manager.connect_all(MONGO_URI, MONGO_DB_NAME)
+    # if db_manager.mongo_manager is None:
+    #     raise Exception("IN MAIN Failed to connect to MongoDB")
+    # else:
+    #     print("IN MAIN Connected to MongoDB")
+
+    await connect_db(MONGO_URI, MONGO_DB_NAME)
 
 @app.on_event("shutdown")
 async def shutdown_db():
     await db_manager.close_all()
+    print("DB connections closed")
+
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
