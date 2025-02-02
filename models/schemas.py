@@ -20,6 +20,6 @@ class ImageData(BaseModel):
     battery_status: float
     temp: float
     humidity: float
-    # result_image: str = ''
+    blob_url: str = ''
     image_data: str
     created_at: datetime
