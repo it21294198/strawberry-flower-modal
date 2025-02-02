@@ -34,6 +34,7 @@ class DatabaseManager:
     def __init__(self):
         self.mongo_manager = MongoDBManager()
 
+
     async def connect_all(self, mongo_uri: str, mongo_db_name: str):
         """
         Connects to all necessary databases (currently only MongoDB).
@@ -45,11 +46,13 @@ class DatabaseManager:
             logging.error(f"Failed to connect to MongoDB: {e}")
             raise
 
+
     async def close_all(self):
         """
         Closes all database connections.
         """
         await self.mongo_manager.close()
+
 
     async def add_to_mongo(self, data: Dict, collection_name: str = "operations"):
         """
@@ -67,6 +70,7 @@ class DatabaseManager:
         except Exception as e:
             logging.error(f"Failed to add data to MongoDB: {e}")
             raise
+
 
     async def check_health(self):
         """

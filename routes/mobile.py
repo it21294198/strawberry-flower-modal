@@ -1,8 +1,10 @@
 from datetime import datetime
 from typing import List
 
+import httpx
 from fastapi import APIRouter, HTTPException, status, Depends
 
+from config import RUST_ROVER_REGISTRATION_URL
 from database import DatabaseManager
 from db_manager import get_db_manager
 from models.userSchemas import UserModel
@@ -14,6 +16,13 @@ router = APIRouter()
 # Create user route
 @router.post("/users/", response_model=UserModel, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserModel, db_manager: DatabaseManager = Depends(get_db_manager)):
+    if db_manager.mongo_manager.db is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="MongoDB connection is not established"
+        )
+    print("MongoDB connection is established.")
+
     # Ensure email uniqueness
     existing_user = await db_manager.mongo_manager.db['users'].find_one({'email': user.email})
     if existing_user:
@@ -24,7 +33,7 @@ async def create_user(user: UserModel, db_manager: DatabaseManager = Depends(get
     print("Email uniqueness OK")
 
     # generate ID
-    user_id = await generate_unique_user_id()
+    user_id = await generate_unique_user_id(db_manager)
     print(f"Unique userId Ok: {user_id}")
     user.userId = user_id
 
@@ -78,8 +87,30 @@ async def get_user_by_username(username: str, db_manager: DatabaseManager = Depe
 
 
 # Update roverIds route
-@router.put("/users/{userId}/roverIds", response_model=UserModel)
-async def update_rover_ids(userId: int, roverIds: List[int], db_manager: DatabaseManager = Depends(get_db_manager)):
+# @router.put("/users/{userId}/roverIds", response_model=UserModel)
+# async def update_rover_ids(userId: int, roverIds: List[int], db_manager: DatabaseManager = Depends(get_db_manager)):
+#     user = await db_manager.mongo_manager.db['users'].find_one({'userId': userId})
+#     if not user:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="User not found"
+#         )
+#
+#     # Update the roverIds and set the updated_at timestamp
+#     updated_user = user
+#     updated_user['roverIds'] = roverIds
+#     updated_user['updated_at'] = datetime.now()
+#
+#     # Replace the user in the database
+#     await db_manager.mongo_manager.db['users'].replace_one({'userId': userId}, updated_user)
+#
+#     return updated_user
+
+
+
+# register rover
+@router.put("/users/{userId}/register-rover", response_model=UserModel)
+async def register_rover(userId: int, db_manager: DatabaseManager = Depends(get_db_manager)):
     user = await db_manager.mongo_manager.db['users'].find_one({'userId': userId})
     if not user:
         raise HTTPException(
@@ -87,13 +118,95 @@ async def update_rover_ids(userId: int, roverIds: List[int], db_manager: Databas
             detail="User not found"
         )
 
-    # Update the roverIds and set the updated_at timestamp
-    updated_user = user
-    updated_user['roverIds'] = roverIds
-    updated_user['updated_at'] = datetime.now()
 
-    # Replace the user in the database
-    await db_manager.mongo_manager.db['users'].replace_one({'userId': userId}, updated_user)
+    payload = {
+        "roverId": 12345,
+        "initialId": 12345,
+        "roverStatus": 12345,
+        "userId": userId
+    }
+
+    # make API call to rust server
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(RUST_ROVER_REGISTRATION_URL, json=payload)
+            response.raise_for_status()
+            data = response.json()
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(
+                status_code=e.response.status_code,
+                detail=f"Rust API error: {e.response.text}"
+            )
+        except httpx.RequestError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Request error: {str(e)}"
+            )
+
+    # Extract `info` and convert to integer
+    try:
+        if data: print("rust data okay")
+        rover_id = int(data.get("info", 0))
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Invalid response format from Rust API"
+        )
+
+    # Update the user's `rovers` array in MongoDB
+    await db_manager.mongo_manager.db['users'].update_one(
+        {"userId": userId},
+        {"$push": {"rovers": {"roverId": rover_id, "nickname": f"Rover-{rover_id}"}}}
+    )
+
+    # Fetch and return the updated user document
+    updated_user = await db_manager.mongo_manager.db['users'].find_one({'userId': userId})
+    if not updated_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found after update"
+        )
+
+    return updated_user
+
+
+
+# update rover nickname
+@router.put("/users/{userId}/rovers/{roverId}/update-nickname", response_model=UserModel)
+async def update_rover_nickname(
+        userId: int,
+        roverId: int,
+        nickname: str,
+        db_manager: DatabaseManager = Depends(get_db_manager),
+):
+    user = await db_manager.mongo_manager.db['users'].find_one({'userId': userId})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Check if the rover belongs to the user
+    rover = next((r for r in user.get("rovers", []) if r["roverId"] == roverId), None)
+    if not rover:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Rover does not belong to this user"
+        )
+
+    # Update the rover's nickname
+    await db_manager.mongo_manager.db['users'].update_one(
+        {"userId": userId, "rovers.roverId": roverId},
+        {"$set": {"rovers.$.nickname": nickname}}
+    )
+
+    # Fetch and return the updated user document
+    updated_user = await db_manager.mongo_manager.db['users'].find_one({'userId': userId})
+    if not updated_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found after update"
+        )
 
     return updated_user
 
@@ -102,7 +215,7 @@ async def update_rover_ids(userId: int, roverIds: List[int], db_manager: Databas
 ###
 
 # generate a unique userId
-async def generate_unique_user_id(db_manager: DatabaseManager = Depends(get_db_manager)):
+async def generate_unique_user_id(db_manager: DatabaseManager):
     while True:
         user_id = int(datetime.now().timestamp() * 1000)  # Generate current time in milliseconds
 
