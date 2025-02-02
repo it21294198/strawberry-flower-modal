@@ -11,7 +11,7 @@ class RoverModel(BaseModel):
 class UserModel(BaseModel):
     username: str
     email: str
-    userId: int
+    userId: Optional[int] = None
     rovers: Optional[List[RoverModel]] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

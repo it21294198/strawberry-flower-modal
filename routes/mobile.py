@@ -16,6 +16,13 @@ router = APIRouter()
 # Create user route
 @router.post("/users/", response_model=UserModel, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserModel, db_manager: DatabaseManager = Depends(get_db_manager)):
+    if db_manager.mongo_manager.db is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="MongoDB connection is not established"
+        )
+    print("MongoDB connection is established.")
+
     # Ensure email uniqueness
     existing_user = await db_manager.mongo_manager.db['users'].find_one({'email': user.email})
     if existing_user:
@@ -26,7 +33,7 @@ async def create_user(user: UserModel, db_manager: DatabaseManager = Depends(get
     print("Email uniqueness OK")
 
     # generate ID
-    user_id = await generate_unique_user_id()
+    user_id = await generate_unique_user_id(db_manager)
     print(f"Unique userId Ok: {user_id}")
     user.userId = user_id
 
@@ -164,10 +171,51 @@ async def register_rover(userId: int, db_manager: DatabaseManager = Depends(get_
 
 
 
+# update rover nickname
+@router.put("/users/{userId}/rovers/{roverId}/update-nickname", response_model=UserModel)
+async def update_rover_nickname(
+        userId: int,
+        roverId: int,
+        nickname: str,
+        db_manager: DatabaseManager = Depends(get_db_manager),
+):
+    user = await db_manager.mongo_manager.db['users'].find_one({'userId': userId})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Check if the rover belongs to the user
+    rover = next((r for r in user.get("rovers", []) if r["roverId"] == roverId), None)
+    if not rover:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Rover does not belong to this user"
+        )
+
+    # Update the rover's nickname
+    await db_manager.mongo_manager.db['users'].update_one(
+        {"userId": userId, "rovers.roverId": roverId},
+        {"$set": {"rovers.$.nickname": nickname}}
+    )
+
+    # Fetch and return the updated user document
+    updated_user = await db_manager.mongo_manager.db['users'].find_one({'userId': userId})
+    if not updated_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found after update"
+        )
+
+    return updated_user
+
+
+
 ###
 
 # generate a unique userId
-async def generate_unique_user_id(db_manager: DatabaseManager = Depends(get_db_manager)):
+async def generate_unique_user_id(db_manager: DatabaseManager):
     while True:
         user_id = int(datetime.now().timestamp() * 1000)  # Generate current time in milliseconds
 
