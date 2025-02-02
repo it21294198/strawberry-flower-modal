@@ -116,18 +116,17 @@ async def run_trigger(db_manager: DatabaseManager = Depends(get_db_manager)):
 
 # get recoded image ddata from mongo
 @router.get("/rovers/flower-images/{rover_id}", response_model=List[ImageData])
-async def get_rover_data(rover_id: int, db_manager: DatabaseManager = Depends(get_db_manager)):
+async def get_rover_image_data(rover_id: int, db_manager: DatabaseManager = Depends(get_db_manager)):
     if db_manager.mongo_manager.db is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="MongoDB connection is not established"
         )
 
-    rover_data = await db_manager.mongo_manager.db['operations'].find({'rover_id': rover_id}).to_list(None)
-    print(rover_data)
-    if not rover_data:
+    rover_image_data = await db_manager.mongo_manager.db['operations'].find({'rover_id': rover_id}).to_list(None)
+    if not rover_image_data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No data found for this rover ID"
         )
-    return rover_data
+    return rover_image_data

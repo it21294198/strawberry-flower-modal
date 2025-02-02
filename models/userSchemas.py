@@ -2,11 +2,17 @@ from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
 
+
+
+class RoverModel(BaseModel):
+    roverId: int
+    nickname: str
+
 class UserModel(BaseModel):
     username: str
     email: str
     userId: int
-    roverIds: List[int]
+    rovers: Optional[List[RoverModel]] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
