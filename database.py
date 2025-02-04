@@ -15,9 +15,9 @@ class MongoDBManager:
         try:
             self.client = AsyncIOMotorClient(uri)
             self.db = self.client[database_name]
-            logging.info("Connected to MongoDB")
+            print("Connected to MongoDB")
         except Exception as e:
-            logging.error(f"Failed to connect to MongoDB: {e}")
+            print(f"Failed to connect to MongoDB: {e}")
             raise
 
     async def close(self):
@@ -34,21 +34,25 @@ class DatabaseManager:
     def __init__(self):
         self.mongo_manager = MongoDBManager()
 
+
     async def connect_all(self, mongo_uri: str, mongo_db_name: str):
         """
         Connects to all necessary databases (currently only MongoDB).
         """
         try:
+            print(f"\nConnecting to MongoDB {mongo_db_name}...\n")
             await self.mongo_manager.connect(mongo_uri, mongo_db_name)
         except Exception as e:
             logging.error(f"Failed to connect to MongoDB: {e}")
             raise
+
 
     async def close_all(self):
         """
         Closes all database connections.
         """
         await self.mongo_manager.close()
+
 
     async def add_to_mongo(self, data: Dict, collection_name: str = "operations"):
         """
@@ -66,6 +70,7 @@ class DatabaseManager:
         except Exception as e:
             logging.error(f"Failed to add data to MongoDB: {e}")
             raise
+
 
     async def check_health(self):
         """
