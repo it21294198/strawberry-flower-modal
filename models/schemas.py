@@ -1,4 +1,6 @@
 from datetime import datetime
+from typing import List
+
 from pydantic import BaseModel
 
 class ImageRequest(BaseModel):
@@ -23,3 +25,12 @@ class ImageData(BaseModel):
     blob_url: str = ''
     image_data: str
     created_at: datetime
+
+class RoverPollinationData(BaseModel):
+    rover_id: int
+    rover_nickname: str
+    flower_count: int
+
+class FlowerCountSummary(BaseModel):
+    net_count: int
+    by_rover: List[RoverPollinationData]
