@@ -1,5 +1,6 @@
+import json
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 
 import httpx
 from fastapi import APIRouter, HTTPException, status, Depends
@@ -7,6 +8,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from config import RUST_ROVER_REGISTRATION_URL
 from database import DatabaseManager
 from db_manager import get_db_manager
+from models.schemas import RoverPollinationData, FlowerCountSummary
 from models.userSchemas import UserModel
 
 router = APIRouter()
@@ -212,6 +214,59 @@ async def update_rover_nickname(
 
 
 
+# get all pollination count of a user's rovers' in a given time rage
+@router.get("/users/{userId}/get-flower-count", response_model=FlowerCountSummary)
+async def get_flower_count_in_range(
+        userId: int,
+        start_date: datetime,
+        end_date: datetime,
+        db_manager=Depends(get_db_manager)
+):
+    # Fetch user from MongoDB
+    user = await db_manager.mongo_manager.db['users'].find_one({'userId': userId})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Extract rover IDs
+    rovers = user.get("rovers", [])
+    rover_ids = [rover["roverId"] for rover in rovers]
+
+    if not rover_ids:
+        return FlowerCountSummary(net_count=0, by_rover=[])
+
+    # Query the operations collection for matching rover data
+    operations_cursor = db_manager.mongo_manager.db['operations'].find({
+        "rover_id": {"$in": rover_ids},
+        "created_at": {"$gte": start_date, "$lte": end_date}
+    })
+
+    operations = await operations_cursor.to_list(None)
+
+    # Process flower counts per rover
+    rover_counts: Dict[int, int] = {}
+    for operation in operations:
+        rover_id = operation["rover_id"]
+        image_data = operation.get("image_data", "[]")
+        flower_count = count_flower_points_from_jason_string(json.dumps(image_data))
+        rover_counts[rover_id] = rover_counts.get(rover_id, 0) + flower_count
+
+    # Prepare response data
+    pollination_data = [
+        RoverPollinationData(rover_id=rover["roverId"],
+                             rover_nickname=rover["nickname"],
+                             flower_count=rover_counts.get(rover["roverId"], 0))
+        for rover in rovers
+    ]
+
+    net_count = sum(rover_counts.values())
+
+    return FlowerCountSummary(net_count=net_count, by_rover=pollination_data)
+
+
+
 ###
 
 # generate a unique userId
@@ -227,3 +282,9 @@ async def generate_unique_user_id(db_manager: DatabaseManager):
         else:
             # Regenerate userId if it already exists
             continue
+
+
+# Parse the JSON string into a Python list and get count
+def count_flower_points_from_jason_string(image_data):
+    points = json.loads(image_data)
+    return len(points)
