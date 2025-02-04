@@ -7,6 +7,10 @@
    ```
    source project_env/bin/activate
    ```
+   for windows
+   ```
+   venv\Scripts\activate
+   ```
 
 3. Install all packages
    ```
