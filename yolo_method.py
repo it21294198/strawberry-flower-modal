@@ -22,6 +22,8 @@ def find_flower_yolo(b64img: str) -> dict:
     if image is None:
         raise ValueError("Failed to decode image from Base64 input. Check input, don't send this part 'data:image/png;base64,'.")
 
+    image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+
     if not os.path.exists("YOLOv8-str-flower-model.pt"):
         raise FileNotFoundError("Model file not found")
 
