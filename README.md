@@ -36,6 +36,10 @@
    ```
    uvicorn main:app --host 0.0.0.0 --port 8080 --reload
    ```
+   on Windows
+   ```
+   uvicorn main:app --port 80 --reload
+   ```
 
 8. Build docker image
    ```
