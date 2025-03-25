@@ -9,12 +9,14 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /code
 
-# Copy and install Python dependencies
-COPY ./requirements.txt /code/requirements.txt
-RUN pip3 install --no-cache-dir --upgrade -r /code/requirements.txt
+# Copy application code and dependencies
+COPY ./requirements.txt ./requirements.txt
+RUN pip3 install --no-cache-dir --upgrade -r requirements.txt
+COPY ./ ./
 
-# Copy application code
-COPY ./ /code/
+# Expose the application port
+EXPOSE 80
 
+# Command to run the application
 # Command to run the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]

@@ -242,6 +242,7 @@ async def run_trigger():
             # Delete the record from PostgreSQL
             delete_data_query = "UPDATE operations SET random_id = 5 WHERE id = %s;"
             cursor.execute(delete_data_query, (data.id))
+            # cursor.execute(delete_data_query, (data.id,))
 
         # Commit the transaction and close the SQL connection
         connection.commit()
